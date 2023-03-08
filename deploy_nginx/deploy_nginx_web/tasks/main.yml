@@ -1,0 +1,128 @@
+---
+# tasks file for deploy_nginx_web
+
+- name: "Add nginx key"
+  ansible.builtin.apt_key:
+    url: "https://nginx.org/packages/keys/nginx_signing.key"
+    state: present
+    keyring: "/etc/apt/trusted.gpg.d/nginx.key"
+
+- name: "Add nginx repo"
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/nginx.key] https://nginx.org/packages/ubuntu jammy nginx"
+    state: present
+    update_cache: true
+
+- name: "Add node key"
+  ansible.builtin.apt_key:
+    url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+    state: present
+    keyring: "/etc/apt/trusted.gpg.d/nodesoure.gpg"
+
+- name: "Add node repo"
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/nodesoure.gpg] https://deb.nodesource.com/node_19.x jammy main"
+    state: present
+    update_cache: true
+
+- name: Update all packages to their latest version
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+
+- name: Update the repository cache and update package "nginx"
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: "Install nodejs"
+  ansible.builtin.apt:
+    name: nodejs
+    state: present
+    update_cache: true
+
+- name: "Copy Nginx config"
+  ansible.builtin.template:
+    src: templates/nginx.conf.j2
+    dest: "{{ confd }}/kettenba.ch.conf"
+    mode: "0755"
+
+- name: "Rename Nginx config"
+  ansible.builtin.template:
+    src: "{{ confd }}/default.conf"
+    dest: "{{ confd }}/default.conf.old"
+    mode: "0755"
+
+- name: Create directory main site
+  ansible.builtin.file:
+    path: /var/www/kettenba.ch/html
+    state: directory
+    mode: "0755"
+    recurse: true
+    owner: ubuntu
+    group: ubuntu
+
+- name: Copy idx Html
+  ansible.builtin.copy:
+    src: files/index.html
+    dest: /var/www/kettenba.ch/html
+    mode: "0755"
+  notify: Restart Nginx
+
+# - name: Enable new site
+#   ansible.builtin.file:
+#     src: "{{ sites_available }}/kettenba.ch"
+#     dest: "{{ sites_enabled }}/kettenba.ch"
+#     state: link
+#   notify: Restart Nginx
+
+# - name: Set ownership of directory
+#   ansible.builtin.file:
+#     path: /var/www/kettenba.ch/html
+#     state: directory
+#     recurse: yes
+#     owner: ubuntu
+#     group: ubuntu
+
+# - name: "Remove old docker versions"
+#   ansible.builtin.apt:
+#     name: docker,docker-engine,docker.io,containerd,runc
+#     state: absent
+
+# - name: "Docker dependencies"
+#   ansible.builtin.apt:
+#     pkg:
+#       - apt-transport-https
+#       - ca-certificates
+#       - curl
+#       - gnupg
+#       - lsb-release
+
+# - name: "Add docker apt key"
+#   ansible.builtin.apt_key:
+#     url: "https://download.docker.com/linux/ubuntu/gpg"
+#     state: present
+#     keyring: "/etc/apt/keyrings/docker.gpg"
+
+# - name: "Add docker repo"
+#   ansible.builtin.apt_repository:
+#     repo: "deb [signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable"
+#     state: present
+#     update_cache: true
+
+# - name: "Docker packages"
+#   ansible.builtin.apt:
+#     pkg:
+#       - docker-ce
+#       - docker-ce-cli
+#       - containerd.io
+#       - docker-compose-plugin
+
+- name: "Install certbot"
+  ansible.builtin.apt:
+    pkg:
+      - certbot
+      - python3-certbot-nginx
+# - name: Reboot the machine with all defaults
+#   ansible.builtin.reboot:

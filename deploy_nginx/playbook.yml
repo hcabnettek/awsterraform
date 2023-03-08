@@ -1,0 +1,12 @@
+---
+- name: Install default Nginx Web Server
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    server_name: kettenba.ch www.kettenba.ch
+    document_root: /var/www/kettenba.ch/html
+    app_root: im_not_used
+
+  roles:
+    - deploy_nginx_web

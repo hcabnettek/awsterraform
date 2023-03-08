@@ -1,0 +1,15 @@
+upstream backend {
+    server backend1.somesite.com;
+    server backend2.somesite.com;
+    server backend3.somesite.com;
+}
+
+server {
+    listen *:80;
+    server_name kettenba.ch www.kettenba.ch;
+    root var/www/kettenba.ch/html;
+    index index.html;
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

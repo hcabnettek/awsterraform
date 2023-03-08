@@ -1,0 +1,5 @@
+---
+# defaults file for deploy_nginx_web
+# sites_available: /etc/nginx/sites-available
+# sites_enabled: /etc/nginx/sites-enabled
+confd: /etc/nginx/conf.d
